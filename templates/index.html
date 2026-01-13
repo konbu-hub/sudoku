@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>おしゃべりクッキーの数独</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/cookie.png') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/cookie.png') }}" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+
+<body>
+    <div id="title-screen" class="glass-panel animate-fade">
+        <div class="cookie-container" style="margin-bottom: 2rem;">
+            <img src="{{ url_for('static', filename='img/cookie_evil.png') }}" alt="Cookie"
+                style="width: 150px; height: 150px; border-radius: 50%; box-shadow: 0 0 30px var(--accent-glow);">
+        </div>
+        <h1 class="big-title">クボゲー Vol.1</h1>
+        <p class="sub-title">おしゃべりクッキーのSUDOKU</p>
+
+        <div class="main-menu">
+            <button id="menu-new-game-btn" class="control-btn primary menu-btn">新しく始める</button>
+            <button id="menu-ranking-btn" class="control-btn menu-btn">ランキング</button>
+            <button id="menu-change-name-btn" class="control-btn menu-btn">名前変更</button>
+            <button id="menu-options-btn" class="control-btn menu-btn">設定</button>
+        </div>
+        <p id="menu-user-welcome" style="margin-top: 2rem; color: var(--text-secondary); font-weight: 600;"></p>
+    </div>
+
+    <div id="game-screen" class="hidden animate-fade">
+        <div id="app-container">
+            <!-- Left Spacer for centering main -->
+            <div class="side-spacer"></div>
+
+            <main class="glass-panel">
+                <header class="game-header">
+                    <div class="title-group">
+                        <h1 style="font-size: 1.5rem;">クボゲーVol.1 数独</h1>
+                        <span id="difficulty-display"
+                            style="color: var(--text-secondary); font-size: 0.9rem; font-weight: 600;">難易度:
+                            普通のクッキー</span>
+                    </div>
+                    <div class="stats-bar">
+                        <div class="stat-item">
+                            <span class="stat-label">ミス</span>
+                            <span id="error-count">0/3</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">タイム</span>
+                            <span id="timer">00:00</span>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="sudoku-grid" id="grid">
+                    <!-- JSで生成 -->
+                </div>
+
+                <div class="numpad">
+                    <button class="num-btn" data-num="1">1<span class="count">9</span></button>
+                    <button class="num-btn" data-num="2">2<span class="count">9</span></button>
+                    <button class="num-btn" data-num="3">3<span class="count">9</span></button>
+                    <button class="num-btn" data-num="4">4<span class="count">9</span></button>
+                    <button class="num-btn" data-num="5">5<span class="count">9</span></button>
+                    <button class="num-btn" data-num="6">6<span class="count">9</span></button>
+                    <button class="num-btn" data-num="7">7<span class="count">9</span></button>
+                    <button class="num-btn" data-num="8">8<span class="count">9</span></button>
+                    <button class="num-btn" data-num="9">9<span class="count">9</span></button>
+                </div>
+            </main>
+
+            <aside class="controls-panel">
+                <div class="glass-panel controls">
+                    <div id="game-user-display"
+                        style="margin-bottom: 1.5rem; font-weight: 600; display: flex; align-items: center; gap: 0.8rem;">
+                        <img src="{{ url_for('static', filename='img/cookie_evil.png') }}" alt="Cookie"
+                            style="width: 32px; height: 32px; border-radius: 50%; box-shadow: 0 0 10px var(--accent-glow);">
+                        <span id="game-user-name">PLAYER: </span>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <button id="game-new-game-btn" class="control-btn primary">新しく始める</button>
+                        <button id="hint-btn" class="control-btn">ヒント (0/3)</button>
+                        <button id="how-to-play-btn" class="control-btn"
+                            style="font-size: 0.8rem; opacity: 0.9; margin-top: 0.5rem;">遊びかた</button>
+                        <button id="back-to-title-btn" class="control-btn secondary"
+                            style="font-size: 0.8rem; opacity: 0.7; margin-top: 0.2rem;">タイトルに戻る</button>
+                    </div>
+
+                    <div class="toggle-group" style="margin-top: 1.5rem;">
+                        <label class="toggle-item" for="fast-pencil-toggle">
+                            <span>自動メモ (FAST PENCIL)</span>
+                            <div class="switch">
+                                <input type="checkbox" id="fast-pencil-toggle">
+                                <span class="slider"></span>
+                            </div>
+                        </label>
+                        <label class="toggle-item" for="lightning-toggle">
+                            <span>爆速連打 (LIGHTNING)</span>
+                            <div class="switch">
+                                <input type="checkbox" id="lightning-toggle">
+                                <span class="slider"></span>
+                            </div>
+                        </label>
+                    </div>
+
+
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="name-modal" class="overlay">
+        <div class="glass-panel modal animate-fade">
+            <div class="cookie-icon" style="margin-bottom: 1rem;">
+                <img src="{{ url_for('static', filename='img/cookie.png') }}" alt="Cookie"
+                    style="width: 80px; height: 80px; border-radius: 50%; box-shadow: 0 0 20px var(--accent-glow);">
+            </div>
+            <h2 id="name-modal-title">お名前</h2>
+            <p id="name-modal-desc">君の名前を教えてほしいッキー！</p>
+            <input type="text" id="username-input" placeholder="名前を入力..." maxlength="15">
+            <button id="save-name-btn" class="control-btn primary" style="width: 100%;">これでいくッキー！</button>
+        </div>
+    </div>
+
+    <div id="difficulty-modal" class="overlay">
+        <div class="glass-panel modal animate-fade">
+            <h2>難易度を選んでほしいッキー！</h2>
+            <div class="difficulty-options" style="display: grid; gap: 0.5rem; margin-top: 1.5rem;">
+                <button class="difficulty-btn control-btn" data-level="easy">やわらかクッキー</button>
+                <button class="difficulty-btn control-btn" data-level="medium">普通のクッキー</button>
+                <button class="difficulty-btn control-btn" data-level="hard">堅めのクッキー</button>
+                <button class="difficulty-btn control-btn" data-level="expert">バリ堅クッキー</button>
+                <button class="difficulty-btn control-btn" data-level="extreme">石</button>
+            </div>
+            <button id="close-difficulty-btn" class="control-btn"
+                style="width: 100%; margin-top: 1.5rem;">やめるッキー</button>
+        </div>
+    </div>
+
+    <div id="ranking-modal" class="overlay">
+        <div class="glass-panel modal animate-fade" style="width: 600px;">
+            <h2>ランキングと修行の記録</h2>
+            <div class="tab-container">
+                <button class="tab-btn active" data-level="easy">やわらか</button>
+                <button class="tab-btn" data-level="medium">普通</button>
+                <button class="tab-btn" data-level="hard">堅め</button>
+                <button class="tab-btn" data-level="expert">バリ堅</button>
+                <button class="tab-btn" data-level="extreme">石</button>
+            </div>
+            <div id="ranking-content" style="max-height: 400px; overflow-y: auto;">
+                <!-- Ranking table -->
+            </div>
+            <button id="close-ranking-btn" class="control-btn" style="width: 100%; margin-top: 1.5rem;">とじる</button>
+        </div>
+    </div>
+
+    <div id="options-modal" class="overlay">
+        <div class="glass-panel modal animate-fade">
+            <h2>設定</h2>
+            <div style="text-align: left; display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1rem;">
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">見た目（テーマ）</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                        <button class="theme-btn control-btn" data-theme="dark">ダーク</button>
+                        <button class="theme-btn control-btn" data-theme="light">ライト</button>
+                    </div>
+                </div>
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">初期モード設定</label>
+                    <div class="toggle-group" style="margin-top: 0;">
+                        <label class="toggle-item" for="default-fast-pencil">
+                            <span>自動メモ (ファストペンシル) を常にON</span>
+                            <div class="switch">
+                                <input type="checkbox" id="default-fast-pencil">
+                                <span class="slider"></span>
+                            </div>
+                        </label>
+                        <label class="toggle-item" for="default-lightning">
+                            <span>爆速連打 (ライトニングモード) を常にON</span>
+                            <div class="switch">
+                                <input type="checkbox" id="default-lightning">
+                                <span class="slider"></span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <button id="close-options-btn" class="control-btn primary"
+                style="width: 100%; margin-top: 2rem;">保存して閉じるッキー！</button>
+        </div>
+    </div>
+
+    <div id="tutorial-modal" class="overlay" style="z-index: 2000;">
+        <div class="glass-panel modal animate-fade" style="max-width: 450px;">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                <img src="{{ url_for('static', filename='img/cookie_evil.png') }}" alt="Cookie"
+                    style="width: 60px; height: 60px; border-radius: 50%; box-shadow: 0 0 15px var(--accent-glow);">
+                <h2 style="margin: 0;">チュートリアル</h2>
+            </div>
+            <div id="tutorial-content" style="text-align: left; margin-bottom: 2rem; line-height: 1.6;">
+                <!-- Tutorial message will be injected here -->
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button id="tutorial-skip-btn" class="control-btn" style="flex: 1;">スキップ</button>
+                <button id="tutorial-next-btn" class="control-btn primary" style="flex: 2;">次へ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="how-to-play-modal" class="overlay">
+        <div class="glass-panel modal animate-fade"
+            style="text-align: left; max-width: 600px; padding: 2.5rem; max-height: 90vh; overflow-y: auto;">
+            <h2 style="text-align: center; margin-bottom: 2rem;">修行のいろは（遊びかた）</h2>
+
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <section>
+                    <h3 style="color: var(--accent-color); margin-bottom: 0.5rem;">◆ 基本ルールと制限</h3>
+                    <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-secondary);">
+                        ・縦・横・3x3のブロックのすべてに、1から9までの数字を重複しないように入れていくパズルです。<br>
+                        ・間違った数字を入れると<b>「ミス」</b>になります。<b>3回ミスでゲームオーバー</b>です。<br>
+                        ・行き詰まったら<b>「ヒント」</b>が使えますが、<b>1回の修行で3回まで</b>しか使えないッキー！
+                    </p>
+                </section>
+
+                <section>
+                    <h3 style="color: var(--accent-color); margin-bottom: 0.5rem;">◆ 独自機能：FAST PENCIL</h3>
+                    <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-secondary);">
+                        空いているマスに「入る可能性のある数字」を自動でメモ表示します。<br>
+                        ONにすると、論理的に絞り込みやすくなり、思考をスピードアップできます。
+                    </p>
+                </section>
+
+                <section>
+                    <h3 style="color: var(--accent-color); margin-bottom: 0.5rem;">◆ 独自機能：LIGHTNING MODE</h3>
+                    <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-secondary);">
+                        <b>最強にスピーディな入力モード</b>です。まず下のボタンで「数字」を選び、それから盤面を次々とタップすることで、その数字を連続で入力できます。
+                    </p>
+                </section>
+
+                <section>
+                    <h3 style="color: var(--accent-color); margin-bottom: 0.5rem;">◆ 最強の操作：マウスホイール</h3>
+                    <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-secondary);">
+                        マウスのホイールを回すだけで、選択中の数字を「1→2→3...」と素早く切り替えられます。クリックの手間を省き、マウスだけで超高速入力が可能です。<br>
+                        <small
+                            style="opacity: 0.8;">※本機能は<b>ファストペンシルモード</b>（またはライトニングモード）中のみ有効な、数字追跡・検索のための専用ツールだッキー！</small>
+                    </p>
+                </section>
+
+                <section>
+                    <h3 style="color: var(--accent-color); margin-bottom: 0.5rem;">◆ 熟練の操作：キーボード</h3>
+                    <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-secondary);">
+                        キーボードによるフル操作にも対応しています：<br>
+                        ・<b>[↑][↓][←][→]</b>：マスの移動<br>
+                        ・<b>[1]〜[9]</b>：数字の入力（ライトニング中は選択切り替え）<br>
+                        ・<b>[BS][Del]</b>：数字の消去
+                    </p>
+                </section>
+
+                <blockquote
+                    style="border-left: 4px solid var(--accent-color); padding-left: 1rem; margin: 1rem 0; font-style: italic; color: var(--text-primary);">
+                    「すべての機能を使いこなせれば、君も最高級のクッキーになれるかもしれないッキー！」
+                </blockquote>
+            </div>
+
+            <button id="close-how-to-btn" class="control-btn primary"
+                style="width: 100%; margin-top: 2rem; padding: 1rem;">わかったッキー！</button>
+        </div>
+    </div>
+
+    <div id="game-over-modal" class="overlay">
+        <div class="glass-panel modal animate-fade">
+            <h2 id="game-over-title">修行失敗ッキー！</h2>
+            <p id="game-over-msg">ミスが限界（3回）を超えちゃったッキー。</p>
+            <button id="retry-btn" class="control-btn primary" style="width: 100%;">修行をやり直す</button>
+            <button id="give-up-btn" class="control-btn" style="width: 100%; margin-top: 0.5rem;">修行をやめる</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+</body>
+
+</html>
