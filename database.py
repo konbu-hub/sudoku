@@ -209,5 +209,31 @@ def get_user_stats(username):
         
         return [dict(row) for row in cursor.fetchall()]
 
+def check_db_config():
+    is_postgres = bool(get_db_url())
+    status = {
+        "type": "PostgreSQL" if is_postgres else "SQLite",
+        "url_configured": is_postgres,
+        "tables": []
+    }
+    
+    try:
+        with DBConnection() as db:
+            cursor = db.cursor()
+            if db.is_postgres:
+                # Check tables in public schema
+                query_wrapper("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'", (), cursor)
+            else:
+                query_wrapper("SELECT name FROM sqlite_master WHERE type='table'", (), cursor)
+                
+            tables = cursor.fetchall()
+            status["tables"] = [dict(t) for t in tables]
+            status["connection"] = "OK"
+    except Exception as e:
+        status["connection"] = "Error"
+        status["error"] = str(e)
+        
+    return status
+
 if __name__ == "__main__":
     init_db()

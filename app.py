@@ -49,5 +49,10 @@ def get_stats():
     stats = database.get_user_stats(username)
     return jsonify(stats)
 
+@app.route('/api/debug/db', methods=['GET'])
+def debug_db():
+    status = database.check_db_config()
+    return jsonify(status)
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
