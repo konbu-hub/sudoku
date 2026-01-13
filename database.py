@@ -11,7 +11,7 @@ except ImportError:
 DB_PATH = 'sudoku.db'
 
 def get_db_url():
-    return os.environ.get('POSTGRES_URL')
+    return os.environ.get('POSTGRES_URL') or os.environ.get('DATABASE_URL')
 
 class DBConnection:
     def __init__(self):
